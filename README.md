@@ -26,7 +26,7 @@ ai-systems-brain/
 │   └── index.md
 ├── 03-ai-systems/
 │   └── index.md
-├── 04-projects/
+├── 04-labs/
 │   └── index.md
 ├── 05-open-source/
 │   └── index.md
@@ -46,7 +46,7 @@ ai-systems-brain/
 - `01-fundamentals`: Linux, OS, network, database, distributed systems, computer architecture 같은 기반 지식을 정리합니다.
 - `02-llm`: Transformer, attention, tokenization, KV cache, sampling, context window 같은 LLM 핵심 개념을 정리합니다. 단, LLM은 AI systems로 들어가기 위한 진입점으로 봅니다.
 - `03-ai-systems`: vLLM, inference serving, batching, GPU scheduling, model serving, observability 같은 AI 시스템 주제를 다룹니다.
-- `04-projects`: 직접 만드는 agent, inference lab, benchmark, toy platform 같은 프로젝트를 기록합니다.
+- `04-labs`: 공부 중 궁금한 현상을 확인하기 위한 짧은 실험, benchmark, 장애 분석을 기록합니다.
 - `05-open-source`: vLLM, OpenHands, LangGraph, MCP, KServe 등 읽어볼 오픈소스와 기여 후보를 관리합니다.
 - `90-questions`: 아직 답을 모르는 질문만 모읍니다.
 - `99-daily`: 매일 또는 매주 배운 점, 이해한 단서, 다음 질문을 기록합니다.
