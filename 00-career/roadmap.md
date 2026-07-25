@@ -11,6 +11,7 @@
 ```text
 Backend Engineer
   -> Platform / Reliability 역량 강화
+  -> GPU Execution과 Memory 이해
   -> LLM Inference와 Agent Runtime 이해
   -> AI Runtime / Serving Platform Engineer
   -> AI Infrastructure / Systems Engineer
@@ -18,9 +19,11 @@ Backend Engineer
 
 이 로드맵의 주력 분야는 `Inference Platform & Reliability`입니다.
 
-- 주력: LLM gateway, inference serving, agent runtime, observability, reliability, performance engineering
+- 주력: GPU-aware performance analysis, inference serving, observability, reliability
+- 출발점: GPU execution model, memory hierarchy, data movement, compute-bound와 memory-bound
+- 연결 영역: Transformer inference, LLM gateway, agent runtime
 - 기반: Linux, network, distributed systems, Kubernetes, cloud, CI/CD, infrastructure as code
-- 필요한 만큼 학습: Transformer inference, GPU architecture, model lifecycle, evaluation
+- 필요한 만큼 학습: model lifecycle, evaluation, PyTorch
 - 당장은 주변 영역: training platform, feature store, 대규모 data pipeline, accelerator kernel 최적화
 
 ## 학습 원칙
@@ -70,6 +73,10 @@ Backend Engineer
 
 ## 핵심 질문
 
+- CPU와 GPU는 같은 계산을 어떻게 다르게 실행하는가?
+- GPU의 thread, block, warp는 어떤 관계이고 병렬성은 어디에서 생기는가?
+- AI workload는 계산량보다 memory와 data movement에 의해 언제 제한되는가?
+- compute-bound와 memory-bound를 어떤 지표와 실험으로 구분하는가?
 - AI 요청의 E2E latency는 gateway, queue, prefill, decode, tool 중 어디에서 증가하는가?
 - 평균 latency는 정상인데 tail latency가 나빠지는 이유는 무엇인가?
 - input/output token 길이와 concurrency는 처리량과 latency를 어떻게 바꾸는가?
@@ -83,7 +90,30 @@ Backend Engineer
 
 ## 지식 축과 우선순위
 
-### 1. Performance and Reliability Fundamentals
+### 1. GPU Execution and Memory Fundamentals
+
+- CPU와 GPU architecture의 목적 차이
+- host, device, kernel
+- thread, block, grid, warp와 SIMT
+- branch divergence와 parallel efficiency
+- register, shared memory, cache, VRAM/HBM
+- memory bandwidth와 data movement
+- PCIe와 CPU-GPU transfer
+- matrix multiplication과 Tensor Core의 역할
+- compute-bound와 memory-bound
+- arithmetic intensity와 roofline model의 직관
+- GPU utilization과 memory utilization의 차이
+- OOM, fragmentation, model weight, KV cache
+- multi-GPU와 tensor parallelism의 기본
+
+처음부터 CUDA kernel을 작성하거나 GPU 회로를 공부하지 않습니다. 다음을 설명할 수 있는 수준을 목표로 합니다.
+
+- AI workload가 왜 GPU의 병렬 실행 구조와 잘 맞는가?
+- GPU utilization이 낮을 때 GPU 자체가 아니라 CPU, memory, network가 원인일 수 있는 이유는 무엇인가?
+- 연산량을 줄이지 않아도 data movement를 줄이면 성능이 좋아질 수 있는 이유는 무엇인가?
+- 같은 GPU에서도 workload에 따라 compute-bound와 memory-bound가 달라지는 이유는 무엇인가?
+
+### 2. Performance and Reliability Fundamentals
 
 - Linux process, thread, memory, file system, network
 - concurrency, queueing, backpressure, load shedding
@@ -92,19 +122,9 @@ Backend Engineer
 - profiling, benchmarking, capacity planning
 - SLI, SLO, alert, incident response, runbook
 
-### 2. Platform Engineering
-
-- container, image, registry
-- Kubernetes workload, network, storage, scheduler
-- Helm 또는 Kustomize
-- 하나의 public cloud
-- Terraform과 infrastructure as code
-- CI/CD, canary, rollback, GitOps
-- authentication, RBAC, secret, quota, multi-tenancy
-- Prometheus, Grafana, OpenTelemetry
-
 ### 3. LLM Inference Fundamentals
 
+- matrix multiplication이 Transformer에서 사용되는 방식
 - tokenization과 token 단위 비용
 - Transformer와 attention의 데이터 흐름
 - training과 inference의 차이
@@ -137,7 +157,18 @@ Backend Engineer
 - request/model/tool/GPU 단위 observability
 - 성능 및 품질 regression gate
 
-### 5. Agent Runtime
+### 5. Platform Engineering
+
+- container, image, registry
+- Kubernetes workload, network, storage, scheduler
+- Helm 또는 Kustomize
+- 하나의 public cloud
+- Terraform과 infrastructure as code
+- CI/CD, canary, rollback, GitOps
+- authentication, RBAC, secret, quota, multi-tenancy
+- Prometheus, Grafana, OpenTelemetry
+
+### 6. Agent Runtime
 
 - tool registry와 tool execution policy
 - execution state와 checkpoint
@@ -149,22 +180,22 @@ Backend Engineer
 
 Agent의 지능을 높이는 것보다 장시간 실행을 안전하고 관측 가능하게 만드는 데 집중합니다.
 
-### 6. GPU and Compute Basics
-
-- GPU execution model의 기초
-- VRAM, HBM, memory bandwidth
-- PCIe와 CPU-GPU data movement
-- GPU utilization과 memory utilization의 차이
-- OOM, fragmentation, model weight, KV cache
-- multi-GPU와 tensor parallelism의 기본
-
-초기 목표는 kernel을 직접 최적화하는 것이 아니라 GPU가 병목인지, 다른 계층이 GPU를 놀게 만드는지 구분하는 것입니다.
-
 ## 학습 환경: AI Runtime Lab
 
 `AI Runtime Lab`은 완성해야 하는 프로젝트가 아니라 개념을 직접 확인하기 위한 개인 실험실입니다. 처음부터 전체 구성을 만들지 않고, 현재 질문에 필요한 부분만 준비합니다.
 
-### 환경 1. Request Path 관찰
+### 환경 1. GPU와 Compute 관찰
+
+- 작은 matrix multiplication workload
+- CPU와 GPU 실행 시간 비교
+- 입력 크기와 batch 크기 변화
+- memory 할당량과 data transfer 관찰
+- warm-up 전후 실행 시간 비교
+- 가능한 환경에서는 profiler로 kernel time과 memory transfer 확인
+
+현재 사용하는 Apple Silicon의 unified memory와 나중에 접할 NVIDIA GPU의 discrete memory 구조가 다르다는 점을 구분합니다. 처음에는 숫자 경쟁보다 workload 크기, 병렬성, memory 이동이 실행 시간에 미치는 관계를 관찰합니다.
+
+### 환경 2. Request Path 관찰
 
 - 간단한 LLM gateway 또는 proxy
 - streaming response
@@ -174,7 +205,7 @@ Agent의 지능을 높이는 것보다 장시간 실행을 안전하고 관측 �
 
 이 환경으로 E2E latency, streaming, timeout, retry가 요청 경로에 미치는 영향을 공부합니다.
 
-### 환경 2. Inference 관찰
+### 환경 3. Inference 관찰
 
 - Ollama 또는 vLLM 기반 model serving
 - workload별 load test
@@ -185,7 +216,7 @@ Agent의 지능을 높이는 것보다 장시간 실행을 안전하고 관측 �
 
 이 환경으로 Transformer inference, prefill/decode, KV cache, batching이 실제 성능 현상으로 어떻게 나타나는지 공부합니다.
 
-### 환경 3. Runtime Reliability 관찰
+### 환경 4. Runtime Reliability 관찰
 
 - tool call을 포함한 간단한 agent execution
 - tool timeout, retry, idempotency
@@ -207,21 +238,26 @@ Agent의 지능을 높이는 것보다 장시간 실행을 안전하고 관측 �
 
 ## 24개월 실행 계획
 
-### 0~3개월: 서버 성능 분석 기반을 계측 가능한 형태로 만들기
+### 0~3개월: GPU 실행과 메모리의 기본 원리 이해하기
 
-- latency percentile, queueing, backpressure, retry amplification을 실험합니다.
-- 작은 backend service에 metrics, trace, profile, SLO를 적용합니다.
-- 간단한 LLM request path를 만들고 구간별 latency를 관찰합니다.
+- CPU와 GPU의 실행 방식 차이를 공부합니다.
+- thread, block, warp, kernel, SIMT의 관계를 이해합니다.
+- register, cache, shared memory, VRAM/HBM과 data movement를 정리합니다.
+- 작은 matrix multiplication으로 workload 크기와 병렬성이 실행 시간에 미치는 영향을 관찰합니다.
+- compute-bound와 memory-bound를 구분하는 직관을 익힙니다.
+- 기존 서버의 CPU, memory, network 병목 분석 방식과 차이를 연결합니다.
 
 점검 기준:
 
-- 요청 경로를 trace로 분해할 수 있습니다.
-- 부하 증가에 따른 p50/p95/p99와 queue 변화를 설명할 수 있습니다.
-- timeout, retry, fallback의 동작을 test로 검증합니다.
+- CPU와 GPU가 같은 계산을 다르게 처리하는 이유를 설명할 수 있습니다.
+- warp와 memory hierarchy가 성능에 영향을 주는 방식을 설명할 수 있습니다.
+- GPU utilization만 보고 병목을 판단하면 안 되는 이유를 설명할 수 있습니다.
+- 관찰한 workload가 compute-bound인지 memory-bound인지 가설을 세울 수 있습니다.
 
-### 4~6개월: LLM inference 원리를 성능 현상과 연결하기
+### 4~6개월: GPU 원리를 LLM inference와 연결하기
 
-- tokenization, attention, prefill/decode, KV cache, batching을 학습합니다.
+- 행렬 연산이 Transformer와 attention에서 어떻게 사용되는지 학습합니다.
+- tokenization, autoregressive generation, prefill/decode, KV cache, batching을 학습합니다.
 - Ollama 또는 vLLM으로 input/output 길이와 concurrency 실험을 수행합니다.
 - 결과를 benchmark report로 남깁니다.
 
@@ -229,6 +265,8 @@ Agent의 지능을 높이는 것보다 장시간 실행을 안전하고 관측 �
 
 - TTFT, inter-token latency, tokens/sec를 구분해 측정합니다.
 - context length와 concurrency가 latency와 memory에 미치는 영향을 그래프로 설명합니다.
+- prefill과 decode의 compute/memory 특성이 왜 다른지 설명합니다.
+- KV cache가 GPU memory와 memory bandwidth에 미치는 영향을 설명합니다.
 - 병목에 대한 가설을 최소 2개 이상 실험으로 검증합니다.
 
 ### 7~12개월: Self-hosted Inference의 분석 범위 넓히기
@@ -281,6 +319,8 @@ Agent의 지능을 높이는 것보다 장시간 실행을 안전하고 관측 �
 - 1시간: metric, trace, profile 분석
 - 30분: 결과와 반례 기록
 - 30분: 다음 실험 결정
+
+처음 3개월에도 GPU 교재를 처음부터 완독하지 않습니다. `GPU는 왜 행렬 연산에 유리한가?`, `GPU utilization이 낮으면 무엇을 의심해야 하는가?`처럼 현재 가장 궁금한 질문에서 시작하고, 답에 필요한 실행·메모리 개념을 따라갑니다.
 
 매주 아래 형식으로 하나의 질문을 끝까지 추적합니다.
 
